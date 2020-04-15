@@ -135,6 +135,11 @@ resource "kubernetes_stateful_set" "stateful_set" {
         restart_policy = var.restart_policy
       }
     }
-
+    update_strategy {
+      type = var.update_strategy_type
+      rolling_update {
+        partition = var.update_strategy_partition
+      }
+    }
   }
 }

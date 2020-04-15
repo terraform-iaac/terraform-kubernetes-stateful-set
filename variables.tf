@@ -83,3 +83,11 @@ variable "revision_history_limit" {
   description = "(Optional) The maximum number of revisions that will be maintained in the StatefulSet's revision history"
   default = null
 }
+variable "update_strategy_type" {
+  description = "(Optional) Indicates the type of the StatefulSetUpdateStrategy. There are two valid update strategies, RollingUpdate and OnDelete"
+  default = "RollingUpdate"
+}
+variable "update_strategy_partition" {
+  description = "(Optional) Indicates the ordinal at which the StatefulSet should be partitioned. You can perform a phased roll out (e.g. a linear, geometric, or exponential roll out) using a partitioned rolling update in a similar manner to how you rolled out a canary. To perform a phased roll out, set the partition to the ordinal at which you want the controller to pause the update. By setting the partition to 0, you allow the StatefulSet controller to continue the update process"
+  default = "0"
+}
