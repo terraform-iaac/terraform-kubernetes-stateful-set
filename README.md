@@ -1,2 +1,2 @@
-# Terraform k8s deploy module
+# Terraform k8s statefulset module
  
