@@ -15,10 +15,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
     }
     template {
       metadata {
-        labels = {
-          app = var.name
-          label = var.custom_label
-        }
+        labels = local.labels
       }
       spec {
         dynamic "security_context" {
@@ -36,6 +33,8 @@ resource "kubernetes_stateful_set" "stateful_set" {
           image = var.image
           name = var.name
           args = var.args
+          command = var.command
+          image_pull_policy = var.image_pull_policy
           dynamic "env" {
             for_each = var.env
             content {
@@ -49,7 +48,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               name = env.value.name
               value_from {
                 field_ref {
-                  field_path = env.value.value
+                  field_path = env.value.field_path
                 }
               }
             }
@@ -57,9 +56,13 @@ resource "kubernetes_stateful_set" "stateful_set" {
           dynamic "resources" {
             for_each = var.resources
             content {
+              requests {
+                cpu = lookup(resources.value, "request_cpu", null)
+                memory = lookup(resources.value, "request_memory", null)
+              }
               limits {
-                cpu = lookup(resources.value, "cpu", null)
-                memory = lookup(resources.value, "memory", null)
+                cpu = lookup(resources.value, "limit_cpu", null)
+                memory = lookup(resources.value, "limit_memory", null)
               }
             }
           }
@@ -128,6 +131,18 @@ resource "kubernetes_stateful_set" "stateful_set" {
               fs_type = lookup(volume.value, "fs_type", null )
               partition = lookup(volume.value, "partition", null )
               read_only = lookup(volume.value, "read_only", null)
+            }
+            name = volume.value.volume_name
+          }
+        }
+        dynamic "volume" {
+          for_each = var.volume_aws_disk
+          content {
+            aws_elastic_block_store {
+              fs_type = lookup(volume.value, "fs_type", null )
+              partition = lookup(volume.value, "partition", null )
+              read_only = lookup(volume.value, "read_only", null)
+              volume_id = volume.value.volume_id
             }
             name = volume.value.volume_name
           }

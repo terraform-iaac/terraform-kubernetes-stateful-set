@@ -16,6 +16,7 @@ variable "volume_nfs" {
   default = []
 }
 variable "volume_host_path" {
+  type = list(object({}))
   description = "(Optional) Attach a file or directory from the host node’s filesystem"
   default = []
 }
@@ -26,6 +27,10 @@ variable "volume_config_map" {
 }
 variable "volume_gce_disk" {
   description = "(Optional) Create volume from google disk to pod"
+  default = []
+}
+variable "volume_aws_disk" {
+  description = "(Optional) Create volume from aws disk to pod"
   default = []
 }
 variable "volume_mount" {
@@ -55,13 +60,17 @@ variable "security_context" {
   description = "(Optional) Set startup user_id, when pods start"
   default = []
 }
-variable "custom_label" {
+variable "custom_labels" {
   description = "(Optional) Add custom label to pods"
   default = null
 }
 variable "args" {
   type = list(string)
   description = "(Optional) Arguments to the entrypoint."
+  default = []
+}
+variable "command" {
+  description = " (Optional) Entrypoint array. Not executed within a shell. "
   default = []
 }
 variable "service_account_token" {
@@ -73,6 +82,10 @@ variable "service_account_name" {
   type = string
   description = "(Optional) Is the name of the ServiceAccount to use to run this pod"
   default = null
+}
+variable "image_pull_policy" {
+  default = "IfNotePresent" // Always, Never or empty
+  description = "he default pull policy is IfNotPresent which causes the Kubelet to skip pulling an image if it already exists. If you would like to always force a pull, you can do one of the following"
 }
 variable "restart_policy" {
   type = string
