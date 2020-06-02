@@ -84,7 +84,7 @@ variable "service_account_name" {
   default = null
 }
 variable "image_pull_policy" {
-  default = "IfNotePresent" // Always, Never or empty
+  default = "IfNotPresent" // Always, Never or empty
   description = "he default pull policy is IfNotPresent which causes the Kubelet to skip pulling an image if it already exists. If you would like to always force a pull, you can do one of the following"
 }
 variable "restart_policy" {
