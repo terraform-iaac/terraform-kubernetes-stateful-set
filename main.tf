@@ -36,13 +36,6 @@ resource "kubernetes_stateful_set" "stateful_set" {
           command = var.command
           image_pull_policy = var.image_pull_policy
           dynamic "env" {
-            for_each = var.env
-            content {
-              name = env.value.name
-              value = env.value.value
-            }
-          }
-          dynamic "env" {
             for_each = var.env_field
             content {
               name = env.value.name
@@ -51,6 +44,13 @@ resource "kubernetes_stateful_set" "stateful_set" {
                   field_path = env.value.field_path
                 }
               }
+            }
+          }
+          dynamic "env" {
+            for_each = var.env
+            content {
+              name = env.value.name
+              value = env.value.value
             }
           }
           dynamic "resources" {
