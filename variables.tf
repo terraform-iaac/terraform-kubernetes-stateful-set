@@ -121,3 +121,8 @@ variable "update_strategy_partition" {
   description = "(Optional) Indicates the ordinal at which the StatefulSet should be partitioned. You can perform a phased roll out (e.g. a linear, geometric, or exponential roll out) using a partitioned rolling update in a similar manner to how you rolled out a canary. To perform a phased roll out, set the partition to the ordinal at which you want the controller to pause the update. By setting the partition to 0, you allow the StatefulSet controller to continue the update process"
   default = "0"
 }
+variable "node_selector" {
+  description = "(Optional) Specify node selector for pod"
+  type = map(string)
+  default = null
+}

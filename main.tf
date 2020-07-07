@@ -85,6 +85,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
           }
           tty = "true"
         }
+        node_selector = var.node_selector
         dynamic "host_aliases"{
           iterator = hosts
           for_each = var.hosts
