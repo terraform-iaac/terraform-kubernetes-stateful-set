@@ -90,7 +90,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
           iterator = hosts
           for_each = var.hosts
           content {
-            hostnames = ["${hosts.value.hostname}"]
+            hostnames = [hosts.value.hostname]
             ip = hosts.value.ip
           }
         }
