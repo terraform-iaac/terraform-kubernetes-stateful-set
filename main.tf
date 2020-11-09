@@ -53,6 +53,18 @@ resource "kubernetes_stateful_set" "stateful_set" {
               value = env.value.value
             }
           }
+          dynamic "env" {
+            for_each = var.env_secret
+            content {
+              name   = env.value.name
+              value_from {
+                secret_key_ref {
+                  name = env.value.secret_name
+                  key  = env.value.secret_key
+                }
+              }
+            }
+          }
           dynamic "resources" {
             for_each = var.resources
             content {
