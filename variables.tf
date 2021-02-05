@@ -24,6 +24,9 @@ variable "volume_config_map" {
   description = "(Optional) The data stored in a ConfigMap object can be referenced in a volume of type configMap and then consumed by containerized applications running in a Pod"
   default     = []
 }
+variable "volume_empty_dir" {
+  type = list(object({volume_name = string}))
+}
 variable "volume_gce_disk" {
   description = "(Optional) Create volume from google disk to pod"
   default     = []

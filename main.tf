@@ -112,6 +112,13 @@ resource "kubernetes_stateful_set" "stateful_set" {
             ip        = hosts.value.ip
           }
         }
+        dynamic volume {
+          for_each = var.volume_empty_dir
+          content {
+            empty_dir {}
+            name = volume.value.volume_name
+          }
+        }
         dynamic "volume" {
           for_each = var.volume_nfs
           content {
