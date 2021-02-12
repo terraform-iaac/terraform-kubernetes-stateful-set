@@ -25,7 +25,8 @@ variable "volume_config_map" {
   default     = []
 }
 variable "volume_empty_dir" {
-  type = list(object({volume_name = string}))
+  type    = list(object({ volume_name = string }))
+  default = []
 }
 variable "volume_gce_disk" {
   description = "(Optional) Create volume from google disk to pod"
