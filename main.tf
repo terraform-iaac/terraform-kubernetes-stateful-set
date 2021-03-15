@@ -1,4 +1,4 @@
-resource "kubernetes_stateful_set" "stateful_set" {
+resource "kubernetes_stateful_set" "this" {
 
   metadata {
     name      = var.name
@@ -35,6 +35,8 @@ resource "kubernetes_stateful_set" "stateful_set" {
         restart_policy = var.restart_policy
 
         node_selector = var.node_selector
+
+        termination_grace_period_seconds = var.termination_grace_period_seconds
 
         dynamic "volume" {
           for_each = var.volume_empty_dir
@@ -91,6 +93,26 @@ resource "kubernetes_stateful_set" "stateful_set" {
         }
 
         dynamic "volume" {
+          for_each = var.volume_secret
+          content {
+            secret {
+              secret_name  = volume.value.secret_name
+              default_mode = lookup(volume.value, "default_mode", null)
+              optional     = lookup(volume.value, "optional", null)
+              dynamic "items" {
+                for_each = lookup(volume.value, "items", [])
+                content {
+                  key  = items.value.key
+                  path = items.value.path
+                  mode = lookup(items.value, "mode", null)
+                }
+              }
+            }
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "volume" {
           for_each = var.volume_aws_disk
           content {
             aws_elastic_block_store {
@@ -116,9 +138,9 @@ resource "kubernetes_stateful_set" "stateful_set" {
           for_each = var.security_context
           content {
             fs_group        = lookup(security_context.value, "fs_group", null)
-            run_as_group    = lookup(security_context.value, "group_id", null)
-            run_as_non_root = lookup(security_context.value, "as_non_root", null)
-            run_as_user     = lookup(security_context.value, "user_id", null)
+            run_as_group    = lookup(security_context.value, "run_as_group", null)
+            run_as_non_root = lookup(security_context.value, "run_as_non_root", null)
+            run_as_user     = lookup(security_context.value, "run_as_user", null)
           }
         }
 
@@ -130,6 +152,14 @@ resource "kubernetes_stateful_set" "stateful_set" {
           image_pull_policy = var.image_pull_policy
           tty               = var.tty
 
+          security_context {
+            dynamic "security_context" {
+              for_each = var.security_context
+              content {
+                read_only_root_filesystem = lookup(security_context.value, "read_only_root_filesystem", null)
+              }
+            }
+          }
           dynamic "env" {
             for_each = var.env_field
             content {
@@ -328,7 +358,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
                   }
                 }
               }
-              
+
               dynamic "post_start" {
                 for_each = lookup(lifecycle.value, "post_start", [])
 

@@ -32,6 +32,10 @@ variable "volume_gce_disk" {
   description = "(Optional) Create volume from google disk to pod"
   default     = []
 }
+variable "volume_secret" {
+  description = "(Optional) Create volume from secret"
+  default     = []
+}
 variable "volume_aws_disk" {
   description = "(Optional) Create volume from aws disk to pod"
   default     = []
@@ -148,4 +152,8 @@ variable "readiness_probe" {
 variable "lifecycle_events" {
   description = "(Optional) Actions that the management system should take in response to container lifecycle events"
   default     = []
+}
+variable "termination_grace_period_seconds" {
+  description = "(Optional) ptional duration in seconds the pod needs to terminate gracefully"
+  default     = null
 }
