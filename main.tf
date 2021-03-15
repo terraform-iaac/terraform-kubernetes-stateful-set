@@ -1,23 +1,117 @@
 resource "kubernetes_stateful_set" "stateful_set" {
+
   metadata {
     name      = var.name
     namespace = var.namespace
+    labels    = local.labels
   }
+
   spec {
     pod_management_policy  = var.pod_management_policy
     replicas               = var.replicas
     revision_history_limit = var.revision_history_limit
     service_name           = var.name
-    selector {
-      match_labels = {
-        app = var.name
+
+    update_strategy {
+      type = var.update_strategy_type
+      rolling_update {
+        partition = var.update_strategy_partition
       }
     }
+
+    selector {
+      match_labels = local.labels
+    }
+
     template {
       metadata {
         labels = local.labels
       }
+
       spec {
+        service_account_name            = var.service_account_name
+        automount_service_account_token = var.service_account_token
+
+        restart_policy = var.restart_policy
+
+        node_selector = var.node_selector
+
+        dynamic "volume" {
+          for_each = var.volume_empty_dir
+          content {
+            empty_dir {}
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "volume" {
+          for_each = var.volume_nfs
+          content {
+            nfs {
+              path   = volume.value.path_on_nfs
+              server = volume.value.nfs_endpoint
+            }
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "volume" {
+          for_each = var.volume_host_path
+          content {
+            host_path {
+              path = volume.value.path_on_node
+              type = lookup(volume.value, "type", null)
+            }
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "volume" {
+          for_each = var.volume_config_map
+          content {
+            config_map {
+              default_mode = volume.value.mode
+              name         = volume.value.name
+            }
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "volume" {
+          for_each = var.volume_gce_disk
+          content {
+            gce_persistent_disk {
+              pd_name   = volume.value.gce_disk
+              fs_type   = lookup(volume.value, "fs_type", null)
+              partition = lookup(volume.value, "partition", null)
+              read_only = lookup(volume.value, "read_only", null)
+            }
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "volume" {
+          for_each = var.volume_aws_disk
+          content {
+            aws_elastic_block_store {
+              fs_type   = lookup(volume.value, "fs_type", null)
+              partition = lookup(volume.value, "partition", null)
+              read_only = lookup(volume.value, "read_only", null)
+              volume_id = volume.value.volume_id
+            }
+            name = volume.value.volume_name
+          }
+        }
+
+        dynamic "host_aliases" {
+          iterator = hosts
+          for_each = var.hosts
+          content {
+            hostnames = [hosts.value.hostname]
+            ip        = hosts.value.ip
+          }
+        }
+
         dynamic "security_context" {
           for_each = var.security_context
           content {
@@ -27,14 +121,15 @@ resource "kubernetes_stateful_set" "stateful_set" {
             run_as_user     = lookup(security_context.value, "user_id", null)
           }
         }
-        service_account_name            = var.service_account_name
-        automount_service_account_token = var.service_account_token
+
         container {
           image             = var.image
           name              = var.name
           args              = var.args
           command           = var.command
           image_pull_policy = var.image_pull_policy
+          tty               = var.tty
+
           dynamic "env" {
             for_each = var.env_field
             content {
@@ -46,6 +141,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               }
             }
           }
+
           dynamic "env" {
             for_each = var.env
             content {
@@ -53,6 +149,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               value = env.value.value
             }
           }
+
           dynamic "env" {
             for_each = var.env_secret
             content {
@@ -65,6 +162,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               }
             }
           }
+
           dynamic "resources" {
             for_each = var.resources
             content {
@@ -84,6 +182,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               }
             }
           }
+
           dynamic "port" {
             for_each = var.internal_port
             content {
@@ -92,6 +191,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               host_port      = lookup(port.value, "host_port", null)
             }
           }
+
           dynamic "volume_mount" {
             for_each = var.volume_mount
             content {
@@ -101,85 +201,172 @@ resource "kubernetes_stateful_set" "stateful_set" {
               read_only  = lookup(volume_mount.value, "read_only", false)
             }
           }
-          tty = "true"
-        }
-        node_selector = var.node_selector
-        dynamic "host_aliases" {
-          iterator = hosts
-          for_each = var.hosts
-          content {
-            hostnames = [hosts.value.hostname]
-            ip        = hosts.value.ip
-          }
-        }
-        dynamic volume {
-          for_each = var.volume_empty_dir
-          content {
-            empty_dir {}
-            name = volume.value.volume_name
-          }
-        }
-        dynamic "volume" {
-          for_each = var.volume_nfs
-          content {
-            nfs {
-              path   = volume.value.path_on_nfs
-              server = volume.value.nfs_endpoint
+
+          dynamic "liveness_probe" {
+            for_each = var.liveness_probe
+            content {
+              failure_threshold     = lookup(liveness_probe.value, "failure_threshold", null)
+              initial_delay_seconds = lookup(liveness_probe.value, "initial_delay_seconds", null)
+              period_seconds        = lookup(liveness_probe.value, "period_seconds", null)
+              success_threshold     = lookup(liveness_probe.value, "success_threshold", null)
+              timeout_seconds       = lookup(liveness_probe.value, "timeout_seconds", null)
+
+              dynamic "exec" {
+                for_each = lookup(liveness_probe.value, "exec", [])
+
+                content {
+                  command = exec.value
+                }
+              }
+
+              dynamic "http_get" {
+                for_each = lookup(liveness_probe.value, "http_get", [])
+                content {
+                  path   = lookup(http_get.value, "path", null)
+                  port   = lookup(http_get.value, "port", null)
+                  scheme = lookup(http_get.value, "scheme", null)
+                  host   = lookup(http_get.value, "host", null)
+
+                  dynamic "http_header" {
+                    for_each = lookup(http_get.value, "http_header", [])
+                    content {
+                      name  = lookup(http_header.value, "name", null)
+                      value = lookup(http_header.value, "value", null)
+                    }
+                  }
+                }
+              }
+
+              dynamic "tcp_socket" {
+                for_each = lookup(liveness_probe.value, "tcp_socket", null) == null ? [] : [{}]
+                content {
+                  port = liveness_probe.value.tcp_socket_port
+                }
+              }
             }
-            name = volume.value.volume_name
           }
-        }
-        dynamic "volume" {
-          for_each = var.volume_host_path
-          content {
-            host_path {
-              path = volume.value.path_on_node
-              type = lookup(volume.value, "type", null)
+
+          dynamic "readiness_probe" {
+            for_each = var.readiness_probe
+            content {
+              failure_threshold     = lookup(readiness_probe.value, "failure_threshold", null)
+              initial_delay_seconds = lookup(readiness_probe.value, "initial_delay_seconds", null)
+              period_seconds        = lookup(readiness_probe.value, "period_seconds", null)
+              success_threshold     = lookup(readiness_probe.value, "success_threshold", null)
+              timeout_seconds       = lookup(readiness_probe.value, "timeout_seconds", null)
+
+              dynamic "exec" {
+                for_each = lookup(readiness_probe.value, "exec", [])
+
+                content {
+                  command = exec.value
+                }
+              }
+
+              dynamic "http_get" {
+                for_each = lookup(readiness_probe.value, "http_get", [])
+                content {
+                  path   = lookup(http_get.value, "path", null)
+                  port   = lookup(http_get.value, "port", null)
+                  scheme = lookup(http_get.value, "scheme", null)
+                  host   = lookup(http_get.value, "host", null)
+
+                  dynamic "http_header" {
+                    for_each = lookup(http_get.value, "http_header", [])
+                    content {
+                      name  = lookup(http_header.value, "name", null)
+                      value = lookup(http_header.value, "value", null)
+                    }
+                  }
+                }
+              }
+
+              dynamic "tcp_socket" {
+                for_each = lookup(readiness_probe.value, "tcp_socket", null) == null ? [] : [{}]
+                content {
+                  port = readiness_probe.value.tcp_socket_port
+                }
+              }
             }
-            name = volume.value.volume_name
           }
-        }
-        dynamic "volume" {
-          for_each = var.volume_config_map
-          content {
-            config_map {
-              default_mode = volume.value.mode
-              name         = volume.value.name
+
+          dynamic "lifecycle" {
+            for_each = var.lifecycle_events
+            content {
+
+              dynamic "pre_stop" {
+                for_each = lookup(lifecycle.value, "pre_stop", [])
+
+                content {
+                  exec {
+                    command = lookup(pre_stop.value, "exec_command", null)
+                  }
+
+                  dynamic "http_get" {
+                    for_each = lookup(pre_stop.value, "http_get", [])
+                    content {
+                      path   = lookup(http_get.value, "path", null)
+                      port   = lookup(http_get.value, "port", null)
+                      scheme = lookup(http_get.value, "scheme", null)
+                      host   = lookup(http_get.value, "host", null)
+
+                      dynamic "http_header" {
+                        for_each = lookup(http_get.value, "http_header", [])
+                        content {
+                          name  = lookup(http_header.value, "name", null)
+                          value = lookup(http_header.value, "value", null)
+                        }
+                      }
+                    }
+                  }
+
+                  dynamic "tcp_socket" {
+                    for_each = lookup(lifecycle.value, "tcp_socket", null) == null ? [] : [{}]
+                    content {
+                      port = lifecycle.value.tcp_socket_port
+                    }
+                  }
+                }
+              }
+              
+              dynamic "post_start" {
+                for_each = lookup(lifecycle.value, "post_start", [])
+
+                content {
+                  exec {
+                    command = lookup(post_start.value, "exec_command", null)
+                  }
+
+                  dynamic "http_get" {
+                    for_each = lookup(post_start.value, "http_get", [])
+                    content {
+                      path   = lookup(http_get.value, "path", null)
+                      port   = lookup(http_get.value, "port", null)
+                      scheme = lookup(http_get.value, "scheme", null)
+                      host   = lookup(http_get.value, "host", null)
+
+                      dynamic "http_header" {
+                        for_each = lookup(http_get.value, "http_header", [])
+                        content {
+                          name  = lookup(http_header.value, "name", null)
+                          value = lookup(http_header.value, "value", null)
+                        }
+                      }
+                    }
+                  }
+
+                  dynamic "tcp_socket" {
+                    for_each = lookup(lifecycle.value, "tcp_socket", null) == null ? [] : [{}]
+                    content {
+                      port = lifecycle.value.tcp_socket_port
+                    }
+                  }
+                }
+              }
             }
-            name = volume.value.volume_name
           }
+
         }
-        dynamic "volume" {
-          for_each = var.volume_gce_disk
-          content {
-            gce_persistent_disk {
-              pd_name   = volume.value.gce_disk
-              fs_type   = lookup(volume.value, "fs_type", null)
-              partition = lookup(volume.value, "partition", null)
-              read_only = lookup(volume.value, "read_only", null)
-            }
-            name = volume.value.volume_name
-          }
-        }
-        dynamic "volume" {
-          for_each = var.volume_aws_disk
-          content {
-            aws_elastic_block_store {
-              fs_type   = lookup(volume.value, "fs_type", null)
-              partition = lookup(volume.value, "partition", null)
-              read_only = lookup(volume.value, "read_only", null)
-              volume_id = volume.value.volume_id
-            }
-            name = volume.value.volume_name
-          }
-        }
-        restart_policy = var.restart_policy
-      }
-    }
-    update_strategy {
-      type = var.update_strategy_type
-      rolling_update {
-        partition = var.update_strategy_partition
       }
     }
   }
