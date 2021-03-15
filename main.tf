@@ -152,12 +152,10 @@ resource "kubernetes_stateful_set" "this" {
           image_pull_policy = var.image_pull_policy
           tty               = var.tty
 
-          security_context {
-            dynamic "security_context" {
-              for_each = var.security_context
-              content {
-                read_only_root_filesystem = lookup(security_context.value, "read_only_root_filesystem", null)
-              }
+          dynamic "security_context" {
+            for_each = var.security_context
+            content {
+              read_only_root_filesystem = lookup(security_context.value, "read_only_root_filesystem", null)
             }
           }
           dynamic "env" {
