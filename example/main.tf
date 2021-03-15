@@ -1,4 +1,4 @@
-module "deploy" {
+module "statefulset" {
   source = "../"
   name = var.app_name
   namespace = var.app_namespace
