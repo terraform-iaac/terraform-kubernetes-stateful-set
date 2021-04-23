@@ -242,10 +242,10 @@ resource "kubernetes_stateful_set" "this" {
               timeout_seconds       = lookup(liveness_probe.value, "timeout_seconds", null)
 
               dynamic "exec" {
-                for_each = lookup(liveness_probe.value, "exec", [])
+                for_each = lookup(liveness_probe.value, "exec", null) == null ? [] : [{}]
 
                 content {
-                  command = exec.value
+                  command = liveness_probe.value.exec
                 }
               }
 
@@ -286,10 +286,10 @@ resource "kubernetes_stateful_set" "this" {
               timeout_seconds       = lookup(readiness_probe.value, "timeout_seconds", null)
 
               dynamic "exec" {
-                for_each = lookup(readiness_probe.value, "exec", [])
+                for_each = lookup(readiness_probe.value, "exec", null) == null ? [] : [{}]
 
                 content {
-                  command = exec.value
+                  command = readiness_probe.value.exec
                 }
               }
 
@@ -328,8 +328,12 @@ resource "kubernetes_stateful_set" "this" {
                 for_each = lookup(lifecycle.value, "pre_stop", [])
 
                 content {
-                  exec {
-                    command = lookup(pre_stop.value, "exec_command", null)
+                  dynamic "exec" {
+                    for_each = lookup(pre_stop.value, "exec", null) == null ? [] : [{}]
+
+                    content {
+                      command = pre_stop.value.exec
+                    }
                   }
 
                   dynamic "http_get" {
@@ -363,8 +367,12 @@ resource "kubernetes_stateful_set" "this" {
                 for_each = lookup(lifecycle.value, "post_start", [])
 
                 content {
-                  exec {
-                    command = lookup(post_start.value, "exec_command", null)
+                  dynamic "exec" {
+                    for_each = lookup(post_start.value, "exec", null) == null ? [] : [{}]
+
+                    content {
+                      command = post_start.value.exec
+                    }
                   }
 
                   dynamic "http_get" {
