@@ -157,7 +157,7 @@ resource "kubernetes_stateful_set" "this" {
             content {
               allow_privilege_escalation = lookup(security_context.value, "allow_privilege_escalation", false)
               privileged                 = lookup(security_context.value, "privileged", false)
-              read_only_root_filesystem  = lookup(security_context.value, "read_only_root_filesystem", null)
+              read_only_root_filesystem  = lookup(security_context.value, "read_only_root_filesystem", true)
             }
           }
           dynamic "env" {
