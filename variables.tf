@@ -111,7 +111,7 @@ variable "replicas" {
 }
 variable "resources" {
   description = "(Optional) Limit resources by cpu or memory for pods"
-  default     = []
+  default     = {}
 }
 variable "pod_management_policy" {
   type        = string
