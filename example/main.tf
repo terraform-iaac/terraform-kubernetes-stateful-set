@@ -48,4 +48,14 @@ module "statefulset" {
       volume_name = var.volume-config
     }
   ]
+  volume_claim = [
+    {
+      name                   = "storage"
+      namespace              = var.app_namespace
+      access_modes           = ["ReadWriteOnce"]
+      requests_storage       = "4Gi"
+      persistent_volume_name = var.persistent_volume_name
+      storage_class_name     = "default"
+    }
+  ]
 }

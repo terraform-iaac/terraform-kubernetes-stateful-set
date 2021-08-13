@@ -12,6 +12,26 @@ resource "kubernetes_stateful_set" "this" {
     revision_history_limit = var.revision_history_limit
     service_name           = var.name
 
+    dynamic "volume_claim_template" {
+      for_each = var.volume_claim
+      content {
+        metadata {
+          name      = volume_claim_template.value.name
+          namespace = volume_claim_template.value.namespace
+        }
+        spec {
+          access_modes = volume_claim_template.value.access_modes
+          resources {
+            requests = {
+              storage = volume_claim_template.value.requests_storage
+            }
+          }
+          storage_class_name = volume_claim_template.value.storage_class_name
+          volume_name        = volume_claim_template.value.persistent_volume_name
+        }
+      }
+    }
+
     update_strategy {
       type = var.update_strategy_type
       rolling_update {
