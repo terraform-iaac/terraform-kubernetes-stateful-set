@@ -10,6 +10,11 @@ variable "image" {
   type        = string
   description = "(Required) Docker image for app"
 }
+variable "volume_claim" {
+  type        = list(object({ name = string, namespace = string, access_modes = list(string), requests_storage = string, storage_class_name = string, persistent_volume_name = string }))
+  description = "(Optional) Attach Persistant Volume Claim"
+  default      = []
+}
 variable "volume_nfs" {
   type        = list(object({ path_on_nfs = string, nfs_endpoint = string, volume_name = string }))
   description = "(Optional) Attach NFS"
