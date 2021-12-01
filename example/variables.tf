@@ -13,7 +13,7 @@ variable "image" {
 variable "ports" {
   default = [
     {
-      name = "web-access"
+      name          = "web-access"
       internal_port = "8080"
     }
   ]
@@ -33,4 +33,7 @@ variable "volume-tmp" {
 
 variable "volume-config" {
   default = "jenkins-configmap"
+}
+variable "persistent_volume_name" {
+  default = "test-volume"
 }

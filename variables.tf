@@ -10,6 +10,15 @@ variable "image" {
   type        = string
   description = "(Required) Docker image for app"
 }
+variable "volume_claim" {
+  type        = list(object({ name = string, namespace = string, access_modes = list(string), requests_storage = string, storage_class_name = string, persistent_volume_name = string }))
+  description = "(Optional) Attach Persistant Volume Claim"
+  default     = []
+}
+variable "toleration" {
+  description = "(Optional) Pod node tolerations"
+  default     = []
+}
 variable "volume_nfs" {
   type        = list(object({ path_on_nfs = string, nfs_endpoint = string, volume_name = string }))
   description = "(Optional) Attach NFS"
@@ -111,7 +120,7 @@ variable "replicas" {
 }
 variable "resources" {
   description = "(Optional) Limit resources by cpu or memory for pods"
-  default     = []
+  default     = {}
 }
 variable "pod_management_policy" {
   type        = string
@@ -137,6 +146,10 @@ variable "node_selector" {
   description = "(Optional) Specify node selector for pod"
   type        = map(string)
   default     = null
+}
+variable "security_context_capabilities" {
+  description = "(Optional) Security context in pod. Only capabilities."
+  default     = []
 }
 variable "tty" {
   default = "true"
