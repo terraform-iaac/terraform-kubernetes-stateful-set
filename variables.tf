@@ -78,7 +78,15 @@ variable "internal_port" {
   default     = []
 }
 variable "security_context" {
-  description = "(Optional) Set startup user_id, when pods start"
+  description = "(Optional) SecurityContext holds pod-level security attributes and common container settings"
+  default     = []
+}
+variable "security_context_capabilities" {
+  description = "(Optional) Security context in pod. Only capabilities."
+  default     = []
+}
+variable "security_context_container" {
+  description = "(Optional) Security context in pod."
   default     = []
 }
 variable "custom_labels" {
@@ -147,10 +155,6 @@ variable "node_selector" {
   type        = map(string)
   default     = null
 }
-variable "security_context_capabilities" {
-  description = "(Optional) Security context in pod. Only capabilities."
-  default     = []
-}
 variable "tty" {
   default = "true"
 }
@@ -169,4 +173,9 @@ variable "lifecycle_events" {
 variable "termination_grace_period_seconds" {
   description = "(Optional) ptional duration in seconds the pod needs to terminate gracefully"
   default     = null
+}
+variable "prevent_deploy_on_the_same_node" {
+  description = "Pod pod_anti_affinity rule, which prevents deploy same pod on one node."
+  type        = bool
+  default     = false
 }

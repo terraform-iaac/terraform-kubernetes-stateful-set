@@ -34,8 +34,11 @@ resource "kubernetes_stateful_set" "this" {
 
     update_strategy {
       type = var.update_strategy_type
-      rolling_update {
-        partition = var.update_strategy_partition
+      dynamic "rolling_update" {
+        for_each = var.update_strategy_type == "RollingUpdate" ? [{}] : []
+        content {
+          partition       = var.update_strategy_partition
+        }
       }
     }
 
@@ -57,6 +60,20 @@ resource "kubernetes_stateful_set" "this" {
         restart_policy = var.restart_policy
 
         node_selector = var.node_selector
+
+        dynamic "affinity" {
+          for_each = var.prevent_deploy_on_the_same_node ? [{}] : []
+          content {
+            pod_anti_affinity {
+              required_during_scheduling_ignored_during_execution {
+                label_selector {
+                  match_labels = local.labels
+                }
+                topology_key = "kubernetes.io/hostname"
+              }
+            }
+          }
+        }
 
         dynamic "toleration" {
           for_each = var.toleration
@@ -183,11 +200,11 @@ resource "kubernetes_stateful_set" "this" {
           command           = var.command
 
           dynamic "security_context" {
-            for_each = var.security_context
+            for_each = flatten([var.security_context_container])
             content {
-              allow_privilege_escalation = lookup(security_context.value, "allow_privilege_escalation", false)
-              privileged                 = lookup(security_context.value, "privileged", false)
-              read_only_root_filesystem  = lookup(security_context.value, "read_only_root_filesystem", false)
+              allow_privilege_escalation = lookup(security_context.value, "allow_privilege_escalation", null)
+              privileged                 = lookup(security_context.value, "privileged", null)
+              read_only_root_filesystem  = lookup(security_context.value, "read_only_root_filesystem", null)
             }
           }
           dynamic "security_context" {

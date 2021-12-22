@@ -38,8 +38,9 @@ module "statefulset" {
 | image\_pull_policy | One of Always, Never, IfNotPresent | `string` | `IfNotPresent` | `Always` | no |
 | args | Arguments to the entrypoint | `list(string)` | n/a | `["--dev", "--nodaemon"]` | no |
 | command | Change entrypoint array | `list(string)` | n/a | `["/bin/bash", "-c", "pwd"]` | no |
-| replicas  | Count of pods | `number` | `1` | `5` | yes |
-| strategy\_update  | Type of statefulset. Can be 'Recreate' or 'RollingUpdate' | `string` | `RollingUpdate` | `Recreate` | yes |
+| replicas  | Count of pods | `number` | `1` | `5` | no |
+| update_strategy\_update  | Type of statefulset. Can be 'OnDelete' or 'RollingUpdate' | `string` | `RollingUpdate` | `OnDelete` | no |
+| update_strategy\_partition  | Indicates the ordinal at which the StatefulSet should be partitioned. You can perform a phased roll out (e.g. a linear, geometric, or exponential roll out) using a partitioned rolling update in a similar manner to how you rolled out a canary. To perform a phased roll out, set the partition to the ordinal at which you want the controller to pause the update. By setting the partition to 0, you allow the StatefulSet controller to continue the update process | `string` | `0` | `0` | no |
 | service_account\_name | Is the name of the ServiceAccount to use to run this pod | `string` | `null` | `application-sa` | no |
 | service_accoun_token | Indicates whether a service account token should be automatically mounted | `bool` | `null` | `true` | no |
 | restart\_policy | Restart policy for all containers within the pod. One of Always, OnFailure, Never | `string` | `Always` | `OnFailure` | no |
