@@ -37,7 +37,7 @@ resource "kubernetes_stateful_set" "this" {
       dynamic "rolling_update" {
         for_each = var.update_strategy_type == "RollingUpdate" ? [{}] : []
         content {
-          partition       = var.update_strategy_partition
+          partition = var.update_strategy_partition
         }
       }
     }
@@ -219,7 +219,7 @@ resource "kubernetes_stateful_set" "this" {
           }
 
           dynamic "env" {
-            for_each = var.env
+            for_each = local.env
             content {
               name  = env.value.name
               value = env.value.value
@@ -227,7 +227,7 @@ resource "kubernetes_stateful_set" "this" {
           }
 
           dynamic "env" {
-            for_each = var.env_field
+            for_each = local.env_field
             content {
               name = env.value.name
               value_from {
@@ -239,7 +239,7 @@ resource "kubernetes_stateful_set" "this" {
           }
 
           dynamic "env" {
-            for_each = var.env_secret
+            for_each = local.env_secret
             content {
               name = env.value.name
               value_from {
