@@ -61,6 +61,13 @@ resource "kubernetes_stateful_set" "this" {
 
         restart_policy = var.restart_policy
 
+        dynamic "image_pull_secrets" {
+          for_each = var.image_pull_secrets
+          content {
+            name = image_pull_secrets.value
+          }
+        }
+
         node_selector = var.node_selector
 
         dynamic "affinity" {
